@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const grid = document.querySelector(".grid");
   const result = document.getElementById("result");
   const restart = document.querySelector("button");
+  const movesDisplay = document.getElementById("moves");
 
   const displayCurrentPlayer = document.getElementById("current-player");
   let currentPlayer = "Player 1";
@@ -182,7 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let middleMoves = [38, 31, 24, 17, 10, 3];
 
   function player2() {
-    // console.log("BEGINS");
+    console.log("BEGINS");
 
     // filter winningArrays, toWin and middleMoves according to player1's last move
     filterList(winningArrays, player1Moves[0], toBlock);
@@ -360,9 +361,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     // no move found with pendingWinsNeed1 restrictions , play without any restrictions
     if (!nextMove) {
-      // console.log(
-      //   "no move found with pendingWinsNeed1 restrictions , play without any restrictions"
-      // );
+      console.log(
+        "no move found with pendingWinsNeed1 restrictions , play without any restrictions"
+      );
+      console.log({ leftOvers });
+      console.log({ combinedArrs });
+
       for (i in combinedArrs) {
         nextMove = findAValidMove(combinedArrs[i]);
         if (nextMove) {
@@ -388,6 +392,7 @@ document.addEventListener("DOMContentLoaded", () => {
     currentPlayer = "Player 1";
     displayCurrentPlayer.textContent = "Your turn";
     displayCurrentPlayer.style.color = "#F012BE";
+    movesDisplay.innerText = player1Moves;
     return;
   }
 
