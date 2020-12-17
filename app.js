@@ -268,7 +268,7 @@ document.addEventListener("DOMContentLoaded", () => {
           result.style.color = "#2ECC40";
           currentPlayer = null;
           displayCurrentPlayer.innerHTML = null;
-          cornify_add();
+          // cornify_add();
           return;
         } else {
           // console.log("player 2 has matching counts of 3, but invalid toWin");
