@@ -1,13 +1,13 @@
 document.addEventListener("DOMContentLoaded", () => {
   const grid = document.querySelector(".grid");
   const result = document.getElementById("result");
-  const restart = document.querySelector("button");
+  const replay = document.querySelector("button");
   const movesDisplay = document.getElementById("moves");
 
   const displayCurrentPlayer = document.getElementById("current-player");
   let currentPlayer = "Player 1";
 
-  restart.onclick = function () {
+  replay.onclick = function () {
     location.reload();
   };
 
@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
     [15, 14, 16, 17],
     [25, 24, 26, 27],
     [22, 21, 23, 24],
-    [18, 11, 19, 20],
+    [18, 17, 19, 20],
     [29, 28, 30, 31],
     [11, 10, 12, 13],
     [36, 35, 37, 38],
