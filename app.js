@@ -199,9 +199,18 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const circles = document.querySelectorAll(".circle");
+  // circles.forEach((circle, index) => circle.classList.add("taken"));
 
-  // circles.forEach((circle, index) => (circle.innerText = index));
+  // Check for a tie
+  const circlesArr = [...circles];
+  const tie = circlesArr.every((circle) => circle.classList.contains("taken"));
+  if (tie) {
+    displayCurrentPlayer.innerHTML = "This is a tie!";
+    displayCurrentPlayer.style.color = "red";
+    return;
+  }
 
+  // AI Player Section
   const huPlayerMoves = [];
   const aiPlayerMoves = [];
   let toBlock = [];
@@ -344,19 +353,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     }
-    // no move found with huPendingWins restrictions , play without any restrictions
-    if (!nextMove && nextMove != 0) {
-      // console.log(
-      //   "no move found with huPendingWins restrictions , play without any restrictions"
-      // );
-
-      for (i in combinedArrs) {
-        nextMove = findAValidMove(combinedArrs[i]);
-        if (nextMove) {
-          break;
-        }
-      }
-    }
 
     // No moves found, game is over
     if (!nextMove && nextMove != 0) {
@@ -366,9 +362,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // filter winningArrays, toWin and middleMoves according to ai's last move
-    console.log({ nextMove });
-
-    console.log({ toWin });
     filterList(winningArrays, nextMove, toWin);
     removeEle(middleMoves, nextMove);
     aiPlayerMoves.unshift(nextMove);
@@ -382,6 +375,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  // Human Player Section
   //add an onclick to each circle in square
   for (var i = 0; i < circles.length - 7; i++)
     (function (i) {
