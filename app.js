@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const movesDisplay = document.getElementById("moves");
 
   const displayCurrentPlayer = document.getElementById("current-player");
-  let currentPlayer = "Player 1";
+  let currentPlayer = "human player";
 
   replay.onclick = function () {
     location.reload();
@@ -104,35 +104,33 @@ document.addEventListener("DOMContentLoaded", () => {
   ];
 
   // ai's automated move functions
-  function filterList(arrs, move, results) {
-    for (i in arrs) {
-      if (arrs[i].includes(move)) {
-        results.push(arrs[i]);
-        arrs[i] = [];
+  function filterList(winningArrays, move, list) {
+    for (i in winningArrays) {
+      if (winningArrays[i].includes(move)) {
+        list.push(winningArrays[i]);
+        winningArrays[i] = [];
       }
     }
   }
 
   function findAValidMove(arr, pendingMoves = []) {
     for (ele of arr) {
-      if (ele === null) {
-        continue;
+      if (ele === null) continue;
+
+      if (pendingMoves.length != 0) {
+        if (
+          circles[ele + 7].classList.contains("taken") &&
+          !circles[ele].classList.contains("taken") &&
+          !pendingMoves.includes(ele)
+        ) {
+          return ele;
+        }
       } else {
-        if (pendingMoves.length != 0) {
-          if (
-            circles[ele + 7].classList.contains("taken") &&
-            !circles[ele].classList.contains("taken") &&
-            !pendingMoves.includes(ele)
-          ) {
-            return ele;
-          }
-        } else {
-          if (
-            circles[ele + 7].classList.contains("taken") &&
-            !circles[ele].classList.contains("taken")
-          ) {
-            return ele;
-          }
+        if (
+          circles[ele + 7].classList.contains("taken") &&
+          !circles[ele].classList.contains("taken")
+        ) {
+          return ele;
         }
       }
     }
@@ -175,7 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function sortCombos(arrs, moves, matchingCounts) {
-    const sortedArrs = [];
+    let sortedArrs = [];
     if (arrs.length != 0) {
       for (x in arrs) {
         let count = 0;
@@ -195,11 +193,15 @@ document.addEventListener("DOMContentLoaded", () => {
         let index = matchingCounts[i][1];
         sortedArrs.push(arrs[index]);
       }
-      arrs = sortedArrs;
+      return sortedArrs;
     }
+    return arrs;
   }
 
   const circles = document.querySelectorAll(".circle");
+
+  // circles.forEach((circle, index) => (circle.innerText = index));
+
   const huPlayerMoves = [];
   const aiPlayerMoves = [];
   let toBlock = [];
@@ -208,7 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let middleMoves = [38, 31, 24, 17, 10, 3];
 
   function ai() {
-    console.log("BEGINS");
+    // console.log("BEGINS");
 
     // filter winningArrays, toWin and middleMoves according to human player's last move
     filterList(winningArrays, huPlayerMoves[0], toBlock);
@@ -218,11 +220,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     //sort toWin by number of matching moves to aiPlayerMoves from greatest to least
     let aiMatchingCounts = [];
-    sortCombos(toWin, aiPlayerMoves, aiMatchingCounts);
+    toWin = sortCombos(toWin, aiPlayerMoves, aiMatchingCounts);
 
     // sort toBlock
     let huMatchingCounts = [];
-    sortCombos(toBlock, huPlayerMoves, huMatchingCounts);
+    toBlock = sortCombos(toBlock, huPlayerMoves, huMatchingCounts);
 
     // The process of ai planning its move
     // toWin --> block --> middle -> winningArrays -> tie
@@ -231,7 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let aiPendingWins = [];
     let concatPendingWins;
 
-    // player 1 has matching counts of 4
+    // human player has matching counts of 4
     if (huMatchingCounts[0][0] === 4) {
       result.innerHTML = "You win!";
       result.style.color = "#F012BE";
@@ -240,7 +242,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // player 2 has matching counts of 3
+    // ai player has matching counts of 3
     for (i in toWin) {
       if (aiMatchingCounts[i][0] === 3) {
         nextMove = findAValidMove(toWin[i]);
@@ -253,22 +255,24 @@ document.addEventListener("DOMContentLoaded", () => {
           // cornify_add();
           return;
         } else {
-          // console.log("player 2 has matching counts of 3, but invalid toWin");
+          // console.log("ai player has matching counts of 3, but invalid toWin");
           let pendingWin = findPendingWin(toWin[i]);
           aiPendingWins.push(pendingWin + 7);
         }
       }
     }
 
-    // player 1 has matching counts of 2 or higher, play toBlock
+    // human player has matching counts of 2 or higher, play toBlock
     for (i in toBlock) {
       if (huMatchingCounts[i][0] === 3) {
-        // console.log("player 1 has matching counts of 3, play toBlock");
+        // console.log("human player has matching counts of 3, play toBlock");
         nextMove = findAValidMove(toBlock[i]);
         if (nextMove) {
           break;
         } else {
-          // console.log("player 1 has matching counts of 3, but invalid toBlock");
+          // console.log(
+          //   "human player has matching counts of 3, but invalid toBlock"
+          // );
           let pendingWin = findPendingWin(toBlock[i]);
           huPendingWins.push(pendingWin + 7);
         }
@@ -278,7 +282,7 @@ document.addEventListener("DOMContentLoaded", () => {
       concatPendingWins = huPendingWins.concat(aiPendingWins);
 
       if (huMatchingCounts[i][0] === 2) {
-        // console.log("player 1 has matching counts of 2, play toBlock");
+        // console.log("human player has matching counts of 2, play toBlock");
         nextMove = findAValidMove(toBlock[i], concatPendingWins);
         if (nextMove) {
           break;
@@ -286,9 +290,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // player 1 has counts of 1 or none, play toWin
+    // human player has counts of 1 or none, play toWin
     if (!nextMove) {
-      // console.log("player 1 has counts of 1 or none, play toWin");
+      // console.log("human player has counts of 1 or none, play toWin");
       for (i in toWin) {
         nextMove = findAValidMove(toWin[i], concatPendingWins);
         if (nextMove) {
@@ -312,9 +316,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // leftOvers is empty, play winningArrays with concatPendingWins restrictions
-    if (!nextMove) {
+    if (!nextMove && nextMove != 0) {
       // console.log(
-      //   "middle is all taken, play winningArrays with huPendingWins restrictions"
+      //   "no leftOvers, play winningArrays with huPendingWins restrictions"
       // );
       for (i in winningArrays) {
         nextMove = findAValidMove(winningArrays[i], concatPendingWins);
@@ -329,7 +333,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // combine toWin, toBlock and winningArrays to find a move without aiPendingWins restrictions
     let combinedArrs = [leftOvers].concat(toWin, winningArrays, toBlock);
 
-    if (!nextMove) {
+    if (!nextMove && nextMove != 0) {
       // console.log(
       //   "combine toWin, toBlock and winningArrays to find a move without aiPendingWins restrictions"
       // );
@@ -341,12 +345,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
     // no move found with huPendingWins restrictions , play without any restrictions
-    if (!nextMove) {
-      console.log(
-        "no move found with huPendingWins restrictions , play without any restrictions"
-      );
-      console.log({ leftOvers });
-      console.log({ combinedArrs });
+    if (!nextMove && nextMove != 0) {
+      // console.log(
+      //   "no move found with huPendingWins restrictions , play without any restrictions"
+      // );
 
       for (i in combinedArrs) {
         nextMove = findAValidMove(combinedArrs[i]);
@@ -357,20 +359,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // No moves found, game is over
-    if (!nextMove) {
-      // console.log("All empty, game is over");
+    if (!nextMove && nextMove != 0) {
+      console.log("All empty, game is over");
       result.innerHTML = "It is a tie!";
       return;
     }
 
     // filter winningArrays, toWin and middleMoves according to ai's last move
+    console.log({ nextMove });
+
+    console.log({ toWin });
     filterList(winningArrays, nextMove, toWin);
     removeEle(middleMoves, nextMove);
     aiPlayerMoves.unshift(nextMove);
     makeAMove(nextMove);
     removeCombo(toBlock, nextMove, leftOvers);
     removeEle(leftOvers, nextMove);
-    currentPlayer = "Player 1";
+    currentPlayer = "human player";
     displayCurrentPlayer.textContent = "Your turn";
     displayCurrentPlayer.style.color = "#F012BE";
     movesDisplay.innerText = huPlayerMoves;
@@ -385,7 +390,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (
           circles[i + 7].classList.contains("taken") &&
           !circles[i].classList.contains("taken") &&
-          currentPlayer === "Player 1"
+          currentPlayer === "human player"
         ) {
           {
             circles[i].classList.add("taken");
@@ -393,7 +398,7 @@ document.addEventListener("DOMContentLoaded", () => {
             huPlayerMoves.unshift(i);
             console.log({ huPlayerMoves });
             //change the player
-            currentPlayer = "Player 2";
+            currentPlayer = "ai player";
             displayCurrentPlayer.innerHTML = "Peanutbot's turn";
             displayCurrentPlayer.style.color = "#2ecc40";
             setTimeout(ai, 700);
