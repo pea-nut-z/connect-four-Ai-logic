@@ -1,15 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
   const grid = document.querySelector(".grid");
   const result = document.getElementById("result");
-  const replay = document.querySelector("button");
+  const button = document.querySelector("button");
   const movesDisplay = document.getElementById("moves");
-
   const displayCurrentPlayer = document.getElementById("current-player");
-  let currentPlayer = "human player";
-
-  replay.onclick = function () {
-    location.reload();
-  };
+  let huPlayer = true;
 
   //create squares with divs that turn into circles when it is clicked
   for (let i = 0; i <= 48; i++)
@@ -27,9 +22,13 @@ document.addEventListener("DOMContentLoaded", () => {
         circle.classList.add("taken");
         square.style.borderColor = "white";
         square.style.borderTopColor = "black";
-        circle.style.borderColor = "white";
       }
     })(i);
+
+  // Reply button
+  button.onclick = function () {
+    location.reload();
+  };
 
   const winningArrays = [
     [1, 0, 2, 3],
@@ -102,6 +101,21 @@ document.addEventListener("DOMContentLoaded", () => {
     [19, 12, 26, 33],
     [20, 13, 27, 34],
   ];
+
+  const circles = document.querySelectorAll(".circle");
+  circles.forEach((circle, index) => (circle.innerText = index));
+
+  function checkTie() {
+    // circles.forEach((circle, index) => circle.classList.add("taken"));
+    const circlesArr = [...circles];
+    const tie = circlesArr.every((circle) =>
+      circle.classList.contains("taken")
+    );
+    if (tie) {
+      result.textContent = "This is a tie!";
+      return;
+    }
+  }
 
   // ai's automated move functions
   function filterList(winningArrays, move, list) {
@@ -198,18 +212,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return arrs;
   }
 
-  const circles = document.querySelectorAll(".circle");
-  // circles.forEach((circle, index) => circle.classList.add("taken"));
-
-  // Check for a tie
-  const circlesArr = [...circles];
-  const tie = circlesArr.every((circle) => circle.classList.contains("taken"));
-  if (tie) {
-    displayCurrentPlayer.innerHTML = "This is a tie!";
-    displayCurrentPlayer.style.color = "red";
-    return;
-  }
-
   // AI Player Section
   const huPlayerMoves = [];
   const aiPlayerMoves = [];
@@ -220,7 +222,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function ai() {
     // console.log("BEGINS");
-
     // filter winningArrays, toWin and middleMoves according to human player's last move
     filterList(winningArrays, huPlayerMoves[0], toBlock);
     removeCombo(toWin, huPlayerMoves[0], leftOvers);
@@ -246,7 +247,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (huMatchingCounts[0][0] === 4) {
       result.innerHTML = "You win!";
       result.style.color = "#F012BE";
-      currentPlayer = null;
       displayCurrentPlayer.innerHTML = null;
       return;
     }
@@ -259,7 +259,6 @@ document.addEventListener("DOMContentLoaded", () => {
           makeAMove(nextMove);
           result.innerHTML = "Peanutbot wins!";
           result.style.color = "#2ECC40";
-          currentPlayer = null;
           displayCurrentPlayer.innerHTML = null;
           // cornify_add();
           return;
@@ -318,17 +317,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // middle is empty, play leftOvers with concatPendingWins restrictions
     if (!nextMove) {
-      // console.log(
-      //   "middle is empty, play leftOvers with concatPendingWins restrictions"
-      // );
+      console.log(
+        "middle is empty, play leftOvers with concatPendingWins restrictions"
+      );
       nextMove = findAValidMove(leftOvers, concatPendingWins);
     }
 
     // leftOvers is empty, play winningArrays with concatPendingWins restrictions
     if (!nextMove && nextMove != 0) {
-      // console.log(
-      //   "no leftOvers, play winningArrays with huPendingWins restrictions"
-      // );
+      console.log(
+        "no leftOvers, play winningArrays with concatPendingWins restrictions"
+      );
       for (i in winningArrays) {
         nextMove = findAValidMove(winningArrays[i], concatPendingWins);
         if (nextMove) {
@@ -343,9 +342,11 @@ document.addEventListener("DOMContentLoaded", () => {
     let combinedArrs = [leftOvers].concat(toWin, winningArrays, toBlock);
 
     if (!nextMove && nextMove != 0) {
-      // console.log(
-      //   "combine toWin, toBlock and winningArrays to find a move without aiPendingWins restrictions"
-      // );
+      console.log(
+        "combine toWin, toBlock and winningArrays to find a move without aiPendingWins restrictions"
+      );
+      console.log({ combinedArrs });
+
       for (i in combinedArrs) {
         nextMove = findAValidMove(combinedArrs[i], huPendingWins);
         if (nextMove) {
@@ -354,11 +355,15 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // No moves found, game is over
+    // use combinedArrs to find a move without restrictions
     if (!nextMove && nextMove != 0) {
-      console.log("All empty, game is over");
-      result.innerHTML = "It is a tie!";
-      return;
+      console.log("use combinedArrs to find a move without restrictions");
+      for (i in combinedArrs) {
+        nextMove = findAValidMove(combinedArrs[i]);
+        if (nextMove) {
+          break;
+        }
+      }
     }
 
     // filter winningArrays, toWin and middleMoves according to ai's last move
@@ -366,9 +371,10 @@ document.addEventListener("DOMContentLoaded", () => {
     removeEle(middleMoves, nextMove);
     aiPlayerMoves.unshift(nextMove);
     makeAMove(nextMove);
+    checkTie();
     removeCombo(toBlock, nextMove, leftOvers);
     removeEle(leftOvers, nextMove);
-    currentPlayer = "human player";
+    huPlayer = !huPlayer;
     displayCurrentPlayer.textContent = "Your turn";
     displayCurrentPlayer.style.color = "#F012BE";
     movesDisplay.innerText = huPlayerMoves;
@@ -384,23 +390,21 @@ document.addEventListener("DOMContentLoaded", () => {
         if (
           circles[i + 7].classList.contains("taken") &&
           !circles[i].classList.contains("taken") &&
-          currentPlayer === "human player"
+          huPlayer
         ) {
           {
             circles[i].classList.add("taken");
             circles[i].classList.add("player-one");
             huPlayerMoves.unshift(i);
-            console.log({ huPlayerMoves });
-            //change the player
-            currentPlayer = "ai player";
-            displayCurrentPlayer.innerHTML = "Peanutbot's turn";
+            checkTie();
+            huPlayer = !huPlayer;
+            displayCurrentPlayer.textContent = "Peanutbot's turn";
             displayCurrentPlayer.style.color = "#2ecc40";
             setTimeout(ai, 700);
           }
           //if the square below your current square is not taken, you can't go there
         } else {
-          displayCurrentPlayer.innerHTML = "Invalid Move!!!";
-          displayCurrentPlayer.style.color = "red";
+          result.textContent = "Invalid Move!";
         }
       };
     })(i);

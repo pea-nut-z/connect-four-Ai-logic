@@ -36,6 +36,10 @@ body {
   border-radius: 70%;
 }
 
+#result {
+  color: red;
+}
+
 button {
   display: inline-block;
   padding: 15px 25px;
