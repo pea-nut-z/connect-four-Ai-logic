@@ -103,18 +103,15 @@ document.addEventListener("DOMContentLoaded", () => {
   ];
 
   const circles = document.querySelectorAll(".circle");
-  circles.forEach((circle, index) => (circle.innerText = index));
+  // circles.forEach((circle, index) => (circle.innerText = index));
+  // circles.forEach((circle, index) => circle.classList.add("taken"));
 
   function checkTie() {
-    // circles.forEach((circle, index) => circle.classList.add("taken"));
     const circlesArr = [...circles];
     const tie = circlesArr.every((circle) =>
       circle.classList.contains("taken")
     );
-    if (tie) {
-      result.textContent = "This is a tie!";
-      return;
-    }
+    if (tie) return (result.textContent = "This is a tie!");
   }
 
   // ai's automated move functions
@@ -317,17 +314,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // middle is empty, play leftOvers with concatPendingWins restrictions
     if (!nextMove) {
-      console.log(
-        "middle is empty, play leftOvers with concatPendingWins restrictions"
-      );
+      // console.log(
+      //   "middle is empty, play leftOvers with concatPendingWins restrictions"
+      // );
       nextMove = findAValidMove(leftOvers, concatPendingWins);
     }
 
     // leftOvers is empty, play winningArrays with concatPendingWins restrictions
     if (!nextMove && nextMove != 0) {
-      console.log(
-        "no leftOvers, play winningArrays with concatPendingWins restrictions"
-      );
+      // console.log(
+      //   "no leftOvers, play winningArrays with concatPendingWins restrictions"
+      // );
       for (i in winningArrays) {
         nextMove = findAValidMove(winningArrays[i], concatPendingWins);
         if (nextMove) {
@@ -342,11 +339,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let combinedArrs = [leftOvers].concat(toWin, winningArrays, toBlock);
 
     if (!nextMove && nextMove != 0) {
-      console.log(
-        "combine toWin, toBlock and winningArrays to find a move without aiPendingWins restrictions"
-      );
-      console.log({ combinedArrs });
-
+      // console.log(
+      //   "combine toWin, toBlock and winningArrays to find a move without aiPendingWins restrictions"
+      // );
       for (i in combinedArrs) {
         nextMove = findAValidMove(combinedArrs[i], huPendingWins);
         if (nextMove) {
@@ -357,7 +352,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // use combinedArrs to find a move without restrictions
     if (!nextMove && nextMove != 0) {
-      console.log("use combinedArrs to find a move without restrictions");
+      // console.log("use combinedArrs to find a move without restrictions");
       for (i in combinedArrs) {
         nextMove = findAValidMove(combinedArrs[i]);
         if (nextMove) {
