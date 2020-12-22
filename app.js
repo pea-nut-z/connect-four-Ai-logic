@@ -106,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // circles.forEach((circle, index) => (circle.innerText = index));
   // circles.forEach((circle, index) => circle.classList.add("taken"));
 
-  function checkTie() {
+  function checkForTie() {
     const circlesArr = [...circles];
     const tie = circlesArr.every((circle) =>
       circle.classList.contains("taken")
@@ -171,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
             leftOvers.push(ele);
           }
         }
-        arrs[i].splice(0, 4);
+        arrs[i] = [];
       }
     }
   }
@@ -218,23 +218,20 @@ document.addEventListener("DOMContentLoaded", () => {
   let middleMoves = [38, 31, 24, 17, 10, 3];
 
   function ai() {
-    // console.log("BEGINS");
     // filter winningArrays, toWin and middleMoves according to human player's last move
     filterList(winningArrays, huPlayerMoves[0], toBlock);
     removeCombo(toWin, huPlayerMoves[0], leftOvers);
     removeEle(middleMoves, huPlayerMoves[0]);
     removeEle(leftOvers, huPlayerMoves[0]);
 
-    //sort toWin by number of matching moves to aiPlayerMoves from greatest to least
+    //sort toWin and toBlock by number of matching moves to aiPlayerMoves from greatest to least
     let aiMatchingCounts = [];
-    toWin = sortCombos(toWin, aiPlayerMoves, aiMatchingCounts);
-
-    // sort toBlock
     let huMatchingCounts = [];
+    toWin = sortCombos(toWin, aiPlayerMoves, aiMatchingCounts);
     toBlock = sortCombos(toBlock, huPlayerMoves, huMatchingCounts);
 
     // The process of ai planning its move
-    // toWin --> block --> middle -> winningArrays -> tie
+    // toWin --> toBlock --> middleMoves -> winningArrays -> tie
     let nextMove;
     let huPendingWins = [];
     let aiPendingWins = [];
@@ -242,9 +239,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // human player has matching counts of 4
     if (huMatchingCounts[0][0] === 4) {
-      result.innerHTML = "You win!";
-      result.style.color = "#F012BE";
-      displayCurrentPlayer.innerHTML = null;
+      displayCurrentPlayer.innerHTML = "You win!";
+      displayCurrentPlayer.style.color = "#F012BE";
       return;
     }
 
@@ -254,9 +250,8 @@ document.addEventListener("DOMContentLoaded", () => {
         nextMove = findAValidMove(toWin[i]);
         if (nextMove) {
           makeAMove(nextMove);
-          result.innerHTML = "Peanutbot wins!";
-          result.style.color = "#2ECC40";
-          displayCurrentPlayer.innerHTML = null;
+          displayCurrentPlayer.innerHTML = "Peanutbot wins!";
+          displayCurrentPlayer.style.color = "#2ECC40";
           // cornify_add();
           return;
         } else {
@@ -366,7 +361,7 @@ document.addEventListener("DOMContentLoaded", () => {
     removeEle(middleMoves, nextMove);
     aiPlayerMoves.unshift(nextMove);
     makeAMove(nextMove);
-    checkTie();
+    checkForTie();
     removeCombo(toBlock, nextMove, leftOvers);
     removeEle(leftOvers, nextMove);
     huPlayer = !huPlayer;
@@ -391,13 +386,16 @@ document.addEventListener("DOMContentLoaded", () => {
             circles[i].classList.add("taken");
             circles[i].classList.add("player-one");
             huPlayerMoves.unshift(i);
-            checkTie();
+            checkForTie();
             huPlayer = !huPlayer;
             displayCurrentPlayer.textContent = "Peanutbot's turn";
             displayCurrentPlayer.style.color = "#2ecc40";
+            result.textContent = null;
             setTimeout(ai, 700);
           }
           //if the square below your current square is not taken, you can't go there
+        } else if (!huPlayer) {
+          result.textContent = "Game Over, please replay!";
         } else {
           result.textContent = "Invalid Move!";
         }
