@@ -26,12 +26,12 @@ body {
   border: 1px solid;
 }
 
-.player-one {
+.huPlayer {
   background-color: #f012be;
   border-radius: 70%;
 }
 
-.player-two {
+.aiPlayer {
   background-color: #2ecc40;
   border-radius: 70%;
 }

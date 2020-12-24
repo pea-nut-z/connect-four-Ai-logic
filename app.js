@@ -1,32 +1,30 @@
 document.addEventListener("DOMContentLoaded", () => {
   const grid = document.querySelector(".grid");
   const result = document.getElementById("result");
-  const button = document.querySelector("button");
-  const movesDisplay = document.getElementById("moves");
+  const replayButton = document.querySelector("button");
+  const huMovesDisplay = document.getElementById("moves");
   const displayCurrentPlayer = document.getElementById("current-player");
-  let huPlayer = true;
 
-  //create squares with divs that turn into circles when it is clicked
-  for (let i = 0; i <= 48; i++)
-    (function (index) {
-      const square = document.createElement("div");
-      square.classList.add("square");
-      grid.appendChild(square);
+  //create squares and circles
+  for (let i = 0; i <= 48; i++) {
+    const square = document.createElement("div");
+    square.classList.add("square");
+    grid.appendChild(square);
 
-      const circle = document.createElement("div");
-      circle.classList.add("circle");
-      square.appendChild(circle);
+    const circle = document.createElement("div");
+    circle.classList.add("circle");
+    square.appendChild(circle);
 
-      // for the last 7 squares at the base outside of the grid
-      if (i >= 42) {
-        circle.classList.add("taken");
-        square.style.borderColor = "white";
-        square.style.borderTopColor = "black";
-      }
-    })(i);
+    // for the last hidden 7 squares at the base outside of the grid
+    if (i >= 42) {
+      circle.classList.add("taken");
+      square.style.borderColor = "white";
+      square.style.borderTopColor = "black";
+    }
+  }
 
-  // Reply button
-  button.onclick = function () {
+  // Replay button
+  replayButton.onclick = function () {
     location.reload();
   };
 
@@ -104,8 +102,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const circles = document.querySelectorAll(".circle");
   // circles.forEach((circle, index) => (circle.innerText = index));
-  // circles.forEach((circle, index) => circle.classList.add("taken"));
 
+  // functions to use
   function checkForTie() {
     const circlesArr = [...circles];
     const tie = circlesArr.every((circle) =>
@@ -114,99 +112,67 @@ document.addEventListener("DOMContentLoaded", () => {
     if (tie) return (result.textContent = "This is a tie!");
   }
 
-  // ai's automated move functions
-  function filterList(winningArrays, move, list) {
-    for (i in winningArrays) {
-      if (winningArrays[i].includes(move)) {
-        list.push(winningArrays[i]);
-        winningArrays[i] = [];
-      }
-    }
+  function filterArr(combos, move, list) {
+    const arrsWithoutMove = [];
+    combos.forEach((combo) =>
+      combo.includes(move) ? list.push(combo) : arrsWithoutMove.push(combo)
+    );
+    return arrsWithoutMove;
   }
 
-  function findAValidMove(arr, pendingMoves = []) {
-    for (ele of arr) {
-      if (ele === null) continue;
+  function findAValidMove(arr, waitsFor = []) {
+    // if (arr.length == 0) return;
+    if (arr == undefined) return;
+    let untaken = arr.filter(
+      (ele) =>
+        circles[ele + 7].classList.contains("taken") &&
+        !circles[ele].classList.contains("taken")
+    );
+    console.log("after regular valid filter", untaken);
 
-      if (pendingMoves.length != 0) {
-        if (
-          circles[ele + 7].classList.contains("taken") &&
-          !circles[ele].classList.contains("taken") &&
-          !pendingMoves.includes(ele)
-        ) {
-          return ele;
-        }
-      } else {
-        if (
-          circles[ele + 7].classList.contains("taken") &&
-          !circles[ele].classList.contains("taken")
-        ) {
-          return ele;
-        }
-      }
+    if (waitsFor.length != 0) {
+      untaken = untaken.filter((ele) => !waitsFor.includes(ele));
+      console.log("after waitsfor filtered ", untaken);
     }
+
+    if (untaken.length == 0) return;
+
+    return untaken[0];
   }
 
-  function findPendingWin(arr) {
-    for (ele of arr) {
-      if (
+  function findPendingWin(arr, waitsFor) {
+    let pendingWin = arr.filter(
+      (ele) =>
         !circles[ele + 7].classList.contains("taken") &&
         !circles[ele].classList.contains("taken")
-      ) {
-        return ele;
-      }
-    }
+    );
+    waitsFor.push(pendingWin[0] + 7);
   }
 
   function makeAMove(i) {
     circles[i].classList.add("taken");
-    circles[i].classList.add("player-two");
+    let circleColor = huPlayer ? "huPlayer" : "aiPlayer";
+    return circles[i].classList.add(circleColor);
   }
 
-  function removeCombo(arrs, move, leftOvers) {
-    for (i in arrs) {
-      if (arrs[i].includes(move)) {
-        for (ele of arrs[i]) {
-          if (!circles[ele].classList.contains("taken")) {
-            leftOvers.push(ele);
-          }
-        }
-        arrs[i] = [];
+  function removeArr(arrs, move) {
+    return arrs.filter((arr) => !arr.includes(move));
+  }
+
+  function sortArrs(arrs, moves, listOfCounts) {
+    for (x in arrs) {
+      let counter = 0;
+      for (y of moves) {
+        if (arrs[x].includes(y)) counter += 1;
       }
+      listOfCounts.push([counter, x]);
     }
-  }
 
-  function removeEle(arr, move) {
-    for (i in arr)
-      if (arr[i] === move) {
-        arr[i] = null;
-      }
-  }
+    listOfCounts.sort((a, b) => {
+      return a > b ? -1 : 1;
+    });
 
-  function sortCombos(arrs, moves, matchingCounts) {
-    let sortedArrs = [];
-    if (arrs.length != 0) {
-      for (x in arrs) {
-        let count = 0;
-        for (y in moves) {
-          if (arrs[x].includes(moves[y])) {
-            count += 1;
-          }
-        }
-        matchingCounts.push([count, x]);
-      }
-
-      matchingCounts.sort((a, b) => {
-        return a > b ? -1 : 1;
-      });
-
-      for (i in matchingCounts) {
-        let index = matchingCounts[i][1];
-        sortedArrs.push(arrs[index]);
-      }
-      return sortedArrs;
-    }
-    return arrs;
+    return listOfCounts.map((count) => arrs[count[1]]);
   }
 
   // AI Player Section
@@ -214,191 +180,144 @@ document.addEventListener("DOMContentLoaded", () => {
   const aiPlayerMoves = [];
   let toBlock = [];
   let toWin = [];
-  let leftOvers = [];
   let middleMoves = [38, 31, 24, 17, 10, 3];
+  let combos = JSON.parse(JSON.stringify(winningArrays));
 
   function ai() {
-    // filter winningArrays, toWin and middleMoves according to human player's last move
-    filterList(winningArrays, huPlayerMoves[0], toBlock);
-    removeCombo(toWin, huPlayerMoves[0], leftOvers);
-    removeEle(middleMoves, huPlayerMoves[0]);
-    removeEle(leftOvers, huPlayerMoves[0]);
+    // filter and remove arrs according to human player's last move
+    combos = filterArr(combos, huPlayerMoves[0], toBlock);
+    toWin = removeArr(toWin, huPlayerMoves[0]);
 
-    //sort toWin and toBlock by number of matching moves to aiPlayerMoves from greatest to least
-    let aiMatchingCounts = [];
-    let huMatchingCounts = [];
-    toWin = sortCombos(toWin, aiPlayerMoves, aiMatchingCounts);
-    toBlock = sortCombos(toBlock, huPlayerMoves, huMatchingCounts);
+    // sort toWin and toBlock by number of matched moves to player's moves from greatest to least
+    let aiMatchCounts = [];
+    let huMatchCounts = [];
+    toWin = sortArrs(toWin, aiPlayerMoves, aiMatchCounts);
+    toBlock = sortArrs(toBlock, huPlayerMoves, huMatchCounts);
 
-    // The process of ai planning its move
-    // toWin --> toBlock --> middleMoves -> winningArrays -> tie
+    // The process of AI planning its move with moves to avoid - huWaitsFor & aiWaitsFor
+    // toWin --> toBlock --> middleMoves -> combos -> tie
     let nextMove;
-    let huPendingWins = [];
-    let aiPendingWins = [];
-    let concatPendingWins;
+    let huWaitsFor = [];
+    let aiWaitsFor = [];
+    let concatWaitsFor;
+    let unfound = true;
 
-    // human player has matching counts of 4
-    if (huMatchingCounts[0][0] === 4) {
-      displayCurrentPlayer.innerHTML = "You win!";
-      displayCurrentPlayer.style.color = "#F012BE";
-      return;
-    }
+    // AI player has counts of 3 & human player hasn't won
+    for (i in aiMatchCounts) {
+      let count = aiMatchCounts[i][0];
+      let huMaxCount = huMatchCounts[0][0];
 
-    // ai player has matching counts of 3
-    for (i in toWin) {
-      if (aiMatchingCounts[i][0] === 3) {
+      if (count == 3 && huMaxCount != 4) {
         nextMove = findAValidMove(toWin[i]);
-        if (nextMove) {
+        if (nextMove != undefined) {
           makeAMove(nextMove);
           displayCurrentPlayer.innerHTML = "Peanutbot wins!";
           displayCurrentPlayer.style.color = "#2ECC40";
-          // cornify_add();
           return;
         } else {
-          // console.log("ai player has matching counts of 3, but invalid toWin");
-          let pendingWin = findPendingWin(toWin[i]);
-          aiPendingWins.push(pendingWin + 7);
+          console.log("invalid toWin - added move to aiWaitsFor");
+          findPendingWin(toWin[i], aiWaitsFor);
         }
       }
     }
 
-    // human player has matching counts of 2 or higher, play toBlock
-    for (i in toBlock) {
-      if (huMatchingCounts[i][0] === 3) {
-        // console.log("human player has matching counts of 3, play toBlock");
+    // Find a strategic and valid move according to human player's matching counts
+    for (i in huMatchCounts) {
+      let count = huMatchCounts[i][0];
+
+      if (count == 4) {
+        displayCurrentPlayer.innerHTML = "You win!";
+        displayCurrentPlayer.style.color = "#F012BE";
+        return;
+      }
+
+      if (count == 3) {
+        console.log("use toBlock - human player has counts of 3");
         nextMove = findAValidMove(toBlock[i]);
-        if (nextMove) {
-          break;
-        } else {
-          // console.log(
-          //   "human player has matching counts of 3, but invalid toBlock"
-          // );
-          let pendingWin = findPendingWin(toBlock[i]);
-          huPendingWins.push(pendingWin + 7);
-        }
+        if (nextMove != undefined) break;
+        console.log("invalid toBlock - added move to huWaitsFor");
+        findPendingWin(toBlock[i], huWaitsFor);
       }
 
-      // combine pendingWins to avoid letting human player wins or blocking ai
-      concatPendingWins = huPendingWins.concat(aiPendingWins);
+      concatWaitsFor = huWaitsFor.concat(aiWaitsFor);
 
-      if (huMatchingCounts[i][0] === 2) {
-        // console.log("human player has matching counts of 2, play toBlock");
-        nextMove = findAValidMove(toBlock[i], concatPendingWins);
-        if (nextMove) {
-          break;
-        }
+      if (count == 2) {
+        console.log("use toBlock - human player has counts of 2");
+        nextMove = findAValidMove(toBlock[i], concatWaitsFor);
+        if (nextMove != undefined) break;
       }
     }
 
-    // human player has counts of 1 or none, play toWin
-    if (!nextMove) {
-      // console.log("human player has counts of 1 or none, play toWin");
-      for (i in toWin) {
-        nextMove = findAValidMove(toWin[i], concatPendingWins);
-        if (nextMove) {
-          break;
-        }
+    // If a valid move still has not been found
+    if (nextMove == undefined) {
+      for (ele of toWin) {
+        console.log("use toWin - human player has counts of 1 or none");
+        nextMove = findAValidMove(ele, concatWaitsFor);
+        if (nextMove != undefined) break;
       }
     }
 
-    // toWin is empty, play middle
-    if (!nextMove) {
-      // console.log("toWin is empty, play middle");
-      nextMove = findAValidMove(middleMoves, concatPendingWins);
+    if (nextMove == undefined) {
+      console.log("use middle");
+      nextMove = findAValidMove(middleMoves, concatWaitsFor);
     }
 
-    // middle is empty, play leftOvers with concatPendingWins restrictions
-    if (!nextMove) {
-      // console.log(
-      //   "middle is empty, play leftOvers with concatPendingWins restrictions"
-      // );
-      nextMove = findAValidMove(leftOvers, concatPendingWins);
-    }
+    if (nextMove == undefined) {
+      for (ele of combos) {
+        console.log("use combos");
+        nextMove = findAValidMove(ele, concatWaitsFor);
+        if (nextMove != undefined) break;
+      }
 
-    // leftOvers is empty, play winningArrays with concatPendingWins restrictions
-    if (!nextMove && nextMove != 0) {
-      // console.log(
-      //   "no leftOvers, play winningArrays with concatPendingWins restrictions"
-      // );
-      for (i in winningArrays) {
-        nextMove = findAValidMove(winningArrays[i], concatPendingWins);
-        if (nextMove) {
-          break;
+      if (nextMove == undefined) {
+        for (ele of winningArrays) {
+          nextMove = findAValidMove(ele, huWaitsFor);
+          console.log("returned for nextMove", nextMove);
+          if (nextMove != undefined) break;
+        }
+      }
+
+      if (nextMove == undefined) {
+        for (ele of winningArrays) {
+          console.log("use winningArrays without any restrictions");
+          nextMove = findAValidMove(ele);
+          if (nextMove != undefined) break;
         }
       }
     }
 
-    // Removing restriction to find valid move
-    // no winningArrays found with both restrictions
-    // combine toWin, toBlock and winningArrays to find a move without aiPendingWins restrictions
-    let combinedArrs = [leftOvers].concat(toWin, winningArrays, toBlock);
-
-    if (!nextMove && nextMove != 0) {
-      // console.log(
-      //   "combine toWin, toBlock and winningArrays to find a move without aiPendingWins restrictions"
-      // );
-      for (i in combinedArrs) {
-        nextMove = findAValidMove(combinedArrs[i], huPendingWins);
-        if (nextMove) {
-          break;
-        }
-      }
-    }
-
-    // use combinedArrs to find a move without restrictions
-    if (!nextMove && nextMove != 0) {
-      // console.log("use combinedArrs to find a move without restrictions");
-      for (i in combinedArrs) {
-        nextMove = findAValidMove(combinedArrs[i]);
-        if (nextMove) {
-          break;
-        }
-      }
-    }
-
-    // filter winningArrays, toWin and middleMoves according to ai's last move
-    filterList(winningArrays, nextMove, toWin);
-    removeEle(middleMoves, nextMove);
-    aiPlayerMoves.unshift(nextMove);
+    // filter and remove arrs according to AI's last move
     makeAMove(nextMove);
     checkForTie();
-    removeCombo(toBlock, nextMove, leftOvers);
-    removeEle(leftOvers, nextMove);
+    combos = filterArr(combos, nextMove, toWin);
+    toBlock = removeArr(toBlock, nextMove);
     huPlayer = !huPlayer;
+    aiPlayerMoves.unshift(nextMove);
     displayCurrentPlayer.textContent = "Your turn";
     displayCurrentPlayer.style.color = "#F012BE";
-    movesDisplay.innerText = huPlayerMoves;
+    huMovesDisplay.innerText = huPlayerMoves;
     return;
   }
 
   // Human Player Section
-  //add an onclick to each circle in square
-  for (var i = 0; i < circles.length - 7; i++)
-    (function (i) {
-      circles[i].onclick = function () {
-        //if the square below your current square is taken, you can go ontop of it
-        if (
-          circles[i + 7].classList.contains("taken") &&
-          !circles[i].classList.contains("taken") &&
-          huPlayer
-        ) {
-          {
-            circles[i].classList.add("taken");
-            circles[i].classList.add("player-one");
-            huPlayerMoves.unshift(i);
-            checkForTie();
-            huPlayer = !huPlayer;
-            displayCurrentPlayer.textContent = "Peanutbot's turn";
-            displayCurrentPlayer.style.color = "#2ecc40";
-            result.textContent = null;
-            setTimeout(ai, 700);
-          }
-          //if the square below your current square is not taken, you can't go there
-        } else if (!huPlayer) {
-          result.textContent = "Game Over, please replay!";
-        } else {
-          result.textContent = "Invalid Move!";
-        }
-      };
-    })(i);
+  let huPlayer = true;
+  circles.forEach((circle, index) =>
+    circle.addEventListener("click", function () {
+      nextMove = findAValidMove([index]);
+      if (nextMove != undefined && huPlayer) {
+        makeAMove(index);
+        checkForTie();
+        huPlayer = !huPlayer;
+        huPlayerMoves.unshift(index);
+        displayCurrentPlayer.textContent = "Peanutbot's turn";
+        displayCurrentPlayer.style.color = "#2ecc40";
+        result.textContent = null;
+        setTimeout(ai, 700);
+      } else if (!huPlayer) {
+        result.textContent = "Game Over, please replay!";
+      } else {
+        result.textContent = "Invalid Move!";
+      }
+    })
+  );
 });
