@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const grid = document.querySelector(".grid");
+  const grid = document.getElementById("grid");
   const result = document.getElementById("result");
   const replayButton = document.querySelector("button");
   const huMovesDisplay = document.getElementById("moves");
@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Replay button
   replayButton.onclick = function () {
-    location.reload();
+    window.location.reload();
   };
 
   const winningArrays = [
@@ -101,7 +101,6 @@ document.addEventListener("DOMContentLoaded", () => {
   ];
 
   const circles = document.querySelectorAll(".circle");
-  // circles.forEach((circle, index) => (circle.innerText = index));
 
   // functions to use
   function checkForTie() {
@@ -109,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const tie = circlesArr.every((circle) =>
       circle.classList.contains("taken")
     );
-    if (tie) return (result.textContent = "This is a tie!");
+    if (tie) return (result.textContent = "It is a tie!");
   }
 
   function filterArr(combos, move, list) {
@@ -121,8 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function findAValidMove(arr, waitsFor = []) {
-    // if (arr.length == 0) return;
-    if (arr == undefined) return;
+    if (arr === undefined) return;
     let untaken = arr.filter(
       (ele) =>
         circles[ele + 7].classList.contains("taken") &&
@@ -130,12 +128,12 @@ document.addEventListener("DOMContentLoaded", () => {
     );
     console.log("after regular valid filter", untaken);
 
-    if (waitsFor.length != 0) {
+    if (waitsFor.length !== 0) {
       untaken = untaken.filter((ele) => !waitsFor.includes(ele));
       console.log("after waitsfor filtered ", untaken);
     }
 
-    if (untaken.length == 0) return;
+    if (untaken.length === 0) return;
 
     return untaken[0];
   }
@@ -160,8 +158,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function sortArrs(arrs, moves, listOfCounts) {
+    listOfCounts.length = 0;
+    let x;
     for (x in arrs) {
       let counter = 0;
+      let y;
       for (y of moves) {
         if (arrs[x].includes(y)) counter += 1;
       }
@@ -175,42 +176,76 @@ document.addEventListener("DOMContentLoaded", () => {
     return listOfCounts.map((count) => arrs[count[1]]);
   }
 
-  // AI Player Section
-  const huPlayerMoves = [];
-  const aiPlayerMoves = [];
+  // Human Player
+  let combos = JSON.parse(JSON.stringify(winningArrays));
+  let huPlayerMoves = [];
+  let huMatchCounts = [];
   let toBlock = [];
   let toWin = [];
-  let middleMoves = [38, 31, 24, 17, 10, 3];
-  let combos = JSON.parse(JSON.stringify(winningArrays));
+  let huPlayer = true;
+
+  // circles.forEach((circle, index) => (circle.innerText = index));
+  circles.forEach((circle, index) =>
+    circle.addEventListener("click", function () {
+      let nextMove = findAValidMove([index]);
+      if (nextMove !== undefined && huPlayer) {
+        makeAMove(index);
+        checkForTie();
+        huPlayerMoves.unshift(index);
+
+        // filter and remove arrs according to human player's last move
+        combos = filterArr(combos, huPlayerMoves[0], toBlock);
+        toWin = removeArr(toWin, huPlayerMoves[0]);
+
+        // sort toBlock by number of matched moves to Human player's moves
+        toBlock = sortArrs(toBlock, huPlayerMoves, huMatchCounts);
+
+        if (huMatchCounts[0][0] === 4) {
+          displayCurrentPlayer.innerHTML = "You win!";
+          displayCurrentPlayer.style.color = "#F012BE";
+          huPlayer = null;
+          return;
+        }
+
+        displayCurrentPlayer.textContent = "Peanutbot's turn";
+        displayCurrentPlayer.style.color = "#2ecc40";
+        result.textContent = null;
+        huMovesDisplay.innerText = huPlayerMoves;
+        huPlayer = !huPlayer;
+        setTimeout(ai, 700);
+        // ai();
+      } else if (huPlayer === null) {
+        result.textContent = "Game Over, please replay!";
+      } else {
+        result.textContent = "Invalid Move!";
+      }
+    })
+  );
+
+  // AI Player
+  const aiPlayerMoves = [];
 
   function ai() {
-    // filter and remove arrs according to human player's last move
-    combos = filterArr(combos, huPlayerMoves[0], toBlock);
-    toWin = removeArr(toWin, huPlayerMoves[0]);
-
-    // sort toWin and toBlock by number of matched moves to player's moves from greatest to least
     let aiMatchCounts = [];
-    let huMatchCounts = [];
-    toWin = sortArrs(toWin, aiPlayerMoves, aiMatchCounts);
-    toBlock = sortArrs(toBlock, huPlayerMoves, huMatchCounts);
-
-    // The process of AI planning its move with moves to avoid - huWaitsFor & aiWaitsFor
-    // toWin --> toBlock --> middleMoves -> combos -> tie
-    let nextMove;
     let huWaitsFor = [];
     let aiWaitsFor = [];
     let concatWaitsFor;
-    let unfound = true;
+    let nextMove;
 
-    // AI player has counts of 3 & human player hasn't won
-    for (i in aiMatchCounts) {
+    // sort toWin by number of AI player's matched moves
+    toWin = sortArrs(toWin, aiPlayerMoves, aiMatchCounts);
+
+    // The process of AI planning its move with moves to avoid - huWaitsFor & aiWaitsFor
+    // middleMoves -> toWin --> toBlock --> combos
+    // AI player has counts of 3
+    for (var i in aiMatchCounts) {
       let count = aiMatchCounts[i][0];
-      let huMaxCount = huMatchCounts[0][0];
 
-      if (count == 3 && huMaxCount != 4) {
+      if (count === 3) {
         nextMove = findAValidMove(toWin[i]);
-        if (nextMove != undefined) {
+        if (nextMove !== undefined) {
           makeAMove(nextMove);
+          huPlayer = null;
           displayCurrentPlayer.innerHTML = "Peanutbot wins!";
           displayCurrentPlayer.style.color = "#2ECC40";
           return;
@@ -221,68 +256,64 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Find a strategic and valid move according to human player's matching counts
+    // Find a move according to human player's matching counts
     for (i in huMatchCounts) {
       let count = huMatchCounts[i][0];
 
-      if (count == 4) {
-        displayCurrentPlayer.innerHTML = "You win!";
-        displayCurrentPlayer.style.color = "#F012BE";
-        return;
-      }
-
-      if (count == 3) {
+      if (count === 3) {
         console.log("use toBlock - human player has counts of 3");
         nextMove = findAValidMove(toBlock[i]);
-        if (nextMove != undefined) break;
+        if (nextMove !== undefined) break;
         console.log("invalid toBlock - added move to huWaitsFor");
         findPendingWin(toBlock[i], huWaitsFor);
       }
 
       concatWaitsFor = huWaitsFor.concat(aiWaitsFor);
 
-      if (count == 2) {
+      if (count === 2) {
         console.log("use toBlock - human player has counts of 2");
         nextMove = findAValidMove(toBlock[i], concatWaitsFor);
-        if (nextMove != undefined) break;
+        if (nextMove !== undefined) break;
       }
     }
 
-    // If a valid move still has not been found
-    if (nextMove == undefined) {
-      for (ele of toWin) {
-        console.log("use toWin - human player has counts of 1 or none");
-        nextMove = findAValidMove(ele, concatWaitsFor);
-        if (nextMove != undefined) break;
-      }
-    }
-
-    if (nextMove == undefined) {
+    // If a move still has not been found -
+    // human player has counts of 1 or none or failed to block or failed to win
+    if (nextMove === undefined) {
       console.log("use middle");
+      let middleMoves = [38, 31, 24, 17, 10, 3];
       nextMove = findAValidMove(middleMoves, concatWaitsFor);
     }
 
-    if (nextMove == undefined) {
-      for (ele of combos) {
-        console.log("use combos");
+    if (nextMove === undefined) {
+      for (var ele of toWin) {
+        console.log("use toWin");
         nextMove = findAValidMove(ele, concatWaitsFor);
-        if (nextMove != undefined) break;
+        if (nextMove !== undefined) break;
       }
+    }
 
-      if (nextMove == undefined) {
-        for (ele of winningArrays) {
-          nextMove = findAValidMove(ele, huWaitsFor);
-          console.log("returned for nextMove", nextMove);
-          if (nextMove != undefined) break;
-        }
+    if (nextMove === undefined) {
+      for (ele of winningArrays) {
+        nextMove = findAValidMove(ele, concatWaitsFor);
+        console.log("use winningArrays");
+        if (nextMove !== undefined) break;
       }
+    }
 
-      if (nextMove == undefined) {
-        for (ele of winningArrays) {
-          console.log("use winningArrays without any restrictions");
-          nextMove = findAValidMove(ele);
-          if (nextMove != undefined) break;
-        }
+    if (nextMove === undefined) {
+      for (ele of winningArrays) {
+        nextMove = findAValidMove(ele, huWaitsFor);
+        console.log("use winningArrays without any aiWaitsFor");
+        if (nextMove !== undefined) break;
+      }
+    }
+
+    if (nextMove === undefined) {
+      for (ele of winningArrays) {
+        console.log("use winningArrays without any restrictions");
+        nextMove = findAValidMove(ele);
+        if (nextMove !== undefined) break;
       }
     }
 
@@ -295,29 +326,6 @@ document.addEventListener("DOMContentLoaded", () => {
     aiPlayerMoves.unshift(nextMove);
     displayCurrentPlayer.textContent = "Your turn";
     displayCurrentPlayer.style.color = "#F012BE";
-    huMovesDisplay.innerText = huPlayerMoves;
     return;
   }
-
-  // Human Player Section
-  let huPlayer = true;
-  circles.forEach((circle, index) =>
-    circle.addEventListener("click", function () {
-      nextMove = findAValidMove([index]);
-      if (nextMove != undefined && huPlayer) {
-        makeAMove(index);
-        checkForTie();
-        huPlayer = !huPlayer;
-        huPlayerMoves.unshift(index);
-        displayCurrentPlayer.textContent = "Peanutbot's turn";
-        displayCurrentPlayer.style.color = "#2ecc40";
-        result.textContent = null;
-        setTimeout(ai, 700);
-      } else if (!huPlayer) {
-        result.textContent = "Game Over, please replay!";
-      } else {
-        result.textContent = "Invalid Move!";
-      }
-    })
-  );
 });
