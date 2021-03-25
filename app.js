@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const grid = document.getElementById("grid");
   const result = document.getElementById("result");
   const replayButton = document.querySelector("button");
-  const huMovesDisplay = document.getElementById("moves");
+  // const huMovesDisplay = document.getElementById("moves");
   const displayCurrentPlayer = document.getElementById("current-player");
 
   //create squares and circles
@@ -105,9 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // functions to use
   function checkForTie() {
     const circlesArr = [...circles];
-    const tie = circlesArr.every((circle) =>
-      circle.classList.contains("taken")
-    );
+    const tie = circlesArr.every((circle) => circle.classList.contains("taken"));
     if (tie) return (result.textContent = "It is a tie!");
   }
 
@@ -123,8 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (arr === undefined) return;
     let untaken = arr.filter(
       (ele) =>
-        circles[ele + 7].classList.contains("taken") &&
-        !circles[ele].classList.contains("taken")
+        circles[ele + 7].classList.contains("taken") && !circles[ele].classList.contains("taken")
     );
     console.log("after regular valid filter", untaken);
 
@@ -141,8 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function findPendingWin(arr, waitsFor) {
     let pendingWin = arr.filter(
       (ele) =>
-        !circles[ele + 7].classList.contains("taken") &&
-        !circles[ele].classList.contains("taken")
+        !circles[ele + 7].classList.contains("taken") && !circles[ele].classList.contains("taken")
     );
     waitsFor.push(pendingWin[0] + 7);
   }
@@ -210,10 +206,9 @@ document.addEventListener("DOMContentLoaded", () => {
         displayCurrentPlayer.textContent = "Peanutbot's turn";
         displayCurrentPlayer.style.color = "#2ecc40";
         result.textContent = null;
-        huMovesDisplay.innerText = huPlayerMoves;
+        // huMovesDisplay.innerText = huPlayerMoves;
         huPlayer = !huPlayer;
         setTimeout(ai, 700);
-        // ai();
       } else if (huPlayer === null) {
         result.textContent = "Game Over, please replay!";
       } else {
@@ -250,7 +245,7 @@ document.addEventListener("DOMContentLoaded", () => {
           displayCurrentPlayer.style.color = "#2ECC40";
           return;
         } else {
-          console.log("invalid toWin - added move to aiWaitsFor");
+          // console.log("invalid toWin - added move to aiWaitsFor");
           findPendingWin(toWin[i], aiWaitsFor);
         }
       }
@@ -261,17 +256,17 @@ document.addEventListener("DOMContentLoaded", () => {
       let count = huMatchCounts[i][0];
 
       if (count === 3) {
-        console.log("use toBlock - human player has counts of 3");
+        // console.log("use toBlock - human player has counts of 3");
         nextMove = findAValidMove(toBlock[i]);
         if (nextMove !== undefined) break;
-        console.log("invalid toBlock - added move to huWaitsFor");
+        // console.log("invalid toBlock - added move to huWaitsFor");
         findPendingWin(toBlock[i], huWaitsFor);
       }
 
       concatWaitsFor = huWaitsFor.concat(aiWaitsFor);
 
       if (count === 2) {
-        console.log("use toBlock - human player has counts of 2");
+        // console.log("use toBlock - human player has counts of 2");
         nextMove = findAValidMove(toBlock[i], concatWaitsFor);
         if (nextMove !== undefined) break;
       }
